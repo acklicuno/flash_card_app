@@ -8,8 +8,20 @@ flip_timer = None
 # --------GENERATE CARD---------#
 # Function that when called, chooses a random word in the series 'French"
 # Takes that random word, and configs test_word to the assigned word
-data = pd.read_csv("data/french_words.csv")
+
+try:
+    data=pd.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    data = pd.read_csv("data/french_words.csv")
+
 to_learn = data.copy()
+
+def is_known():
+    global to_learn
+
+    to_learn = to_learn.drop(current_card.name)
+    to_learn.to_csv("data/words_to_learn.csv", index=False)
+    gen_card()
 
 def gen_card():
     global to_learn, current_card, flip_timer
@@ -23,12 +35,12 @@ def gen_card():
 
     sample = to_learn.sample()
     current_card = sample.iloc[0]
-    to_learn.drop(sample.index)
+
 
     canvas.itemconfig(test_word, text=current_card["French"])
     canvas.itemconfig(language_title, text="French")
     # Call card flip after 3 seconds
-    window.after(3000, card_flip)
+    flip_timer = window.after(3000, card_flip)
 
     return current_card
 
@@ -44,9 +56,6 @@ def card_flip():
     canvas.itemconfig(test_word, text=current_card["English"])
     canvas.itemconfig(language_title, text="English")
     bg_img.config(file="images/card_back.png")
-
-
-
 # --------UI SET UP--------- #
 window = tk.Tk()
 window.title("Flashy")
@@ -65,9 +74,9 @@ no_button = Button(image=no_button_img, highlightthickness=0, command=gen_card)
 no_button.grid(row=1, column=0)
 
 yes_button_img = PhotoImage(file="images/right.png")
-yes_button = Button(image=yes_button_img, highlightthickness=0, command=gen_card)
+yes_button = Button(image=yes_button_img, highlightthickness=0, command=is_known)
 yes_button.grid(row=1, column=1)
 
 
-
+gen_card()
 window.mainloop()
